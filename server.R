@@ -1,4 +1,5 @@
 library(shiny)
+library(rCharts)
 
 compose <- function(f,g){
     return(function(...) f(g(...)))
@@ -160,6 +161,12 @@ shinyServer(function(input, output, session) {
     output$results <- renderDataTable(cfsirr()$cfsDf)
     output$irr <- 
         renderText(paste0("IRR = ", round(cfsirr()$irr * 100, 3), " %"))
+        
+    output$redm <- renderText(
+        paste("Redemption Value =", 
+            cfsirr()$cfsDf[dim(cfsirr()$cfsDf)[1], ]$NetCF
+        )
+    )
         
     output$navChart <- renderChart({
         plotOut <- nPlot(Sensex ~ Date, data = bse30df, type = "lineChart")

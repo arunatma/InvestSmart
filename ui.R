@@ -24,10 +24,10 @@ shinyUI(pageWithSidebar(
                 ),
                 selectInput('freq', 'Frequency', 
                     c('Daily' = 'day', 'Weekly' = 'week', 'Monthly' = 'month',
-                    'Quarterly' = 'quarter', 'Yearly' = 'year'), selected='year'),
+                    'Quarterly' = 'quarter', 'Yearly' = 'year'), selected='month'),
                 dateRangeInput('dateRange', 'Start and Stop Dates:', 
                     min = '1990-01-01', max = '2015-03-12', 
-                    start = '2015-01-01', end = '2015-01-20'),
+                    start = '2005-01-01', end = '2015-01-20'),
                 conditionalPanel(
                     condition = "input.invType == 'swp'",
                     selectInput('reinv', 'Reinvestment Rate:', 
@@ -46,13 +46,18 @@ shinyUI(pageWithSidebar(
     mainPanel(
         tabsetPanel(
             tabPanel('Transaction', 
-                br(), wellPanel(h3(textOutput("irr"))),
-                br(), dataTableOutput("results")),
+                br(),   wellPanel(h4(textOutput("irr")),
+                            br(), h4(textOutput("redm"))
+                        ),
+                br(), dataTableOutput("results")
+            ),
             tabPanel("Charting", 
-                br(), showOutput('invChart', 'Highcharts')),
+                br(), showOutput('invChart', 'highcharts')
+            ),
             tabPanel('Historical NAV', 
                 br(), showOutput('navChart', 'nvd3'),
-                br(), dataTableOutput('navDf'))
+                br(), dataTableOutput('navDf')
+            )
         )
     )
     
