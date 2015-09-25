@@ -109,7 +109,7 @@ compareFn = function(invStartDate, cdf, gapYears, stpYears){
     netArbPlus = redStripMode - redFullMode
     ratArbPlus = netArbPlus / invAmt
     netRatio = ((1 + ratArbPlus) ^ (1 / (gapYears + stpYears))) - 1
-    return(c(redStripMode - invAmt, redFullMode - invAmt))
+    return(c(redStripMode - invAmt, redFullMode - invAmt, netArbPlus, netRatio))
 }
 
 
@@ -117,5 +117,14 @@ compareFn = function(invStartDate, cdf, gapYears, stpYears){
 # int = A - P = P(1 + r/100)^n - P
 # int/P = A/P - 1 = (1+ r/100)^n - 1 
 
-pZeroTwo=sapply(seq.Date(invStartDate, by="month", length.out=81), compareFn, cdf, 0, 2)
-    
+pZeroOne = sapply(seq.Date(invStartDate, by="month", length.out=93), compareFn, 
+	cdf, 0, 1)
+pZeroTwo = sapply(seq.Date(invStartDate, by="month", length.out=81), compareFn, 
+	cdf, 0, 2)
+pOneOne = sapply(seq.Date(invStartDate, by="month", length.out=81), compareFn, 
+	cdf, 1, 1)
+pOneTwo = sapply(seq.Date(invStartDate, by="month", length.out=69), compareFn, 
+	cdf, 1, 2)
+pOneThree = sapply(seq.Date(invStartDate, by="month", length.out=57), compareFn, 
+	cdf, 1, 3) 
+	
