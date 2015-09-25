@@ -128,3 +128,50 @@ pOneTwo = sapply(seq.Date(invStartDate, by="month", length.out=69), compareFn,
 pOneThree = sapply(seq.Date(invStartDate, by="month", length.out=57), compareFn, 
 	cdf, 1, 3) 
 	
+pTwoOne = sapply(seq.Date(invStartDate, by="month", length.out=69), compareFn, 
+	cdf, 2, 1)
+pTwoTwo = sapply(seq.Date(invStartDate, by="month", length.out=57), compareFn, 
+	cdf, 2, 2)
+pTwoThree = sapply(seq.Date(invStartDate, by="month", length.out=45), compareFn, 
+	cdf, 2, 3) 
+	
+stripProfit01 = pZeroOne[1,]
+fullProfit01 = pZeroOne[2,]
+netProfit01 = pZeroOne[3,]
+netPct01 = pZeroOne[4,]
+
+stripProfit02 = pZeroTwo[1,]
+fullProfit02 = pZeroTwo[2,]
+netProfit02 = pZeroTwo[3,]
+netPct02 = pZeroTwo[4,]
+
+stripProfit11 = pOneOne[1,]
+fullProfit11 = pOneOne[2,]
+netProfit11 = pOneOne[3,]
+netPct11 = pOneOne[4,]
+
+stripProfit12 = pOneTwo[1,]
+fullProfit12 = pOneTwo[2,]
+netProfit12 = pOneTwo[3,]
+netPct12 = pOneTwo[4,]
+
+stripProfit13 = pOneThree[1,]
+fullProfit13 = pOneThree[2,]
+netProfit13 = pOneThree[3,]
+netPct13 = pOneThree[4,]
+
+stripProfit21 = pTwoOne[1,]
+fullProfit21 = pTwoOne[2,]
+netProfit21 = pTwoOne[3,]
+netPct21 = pTwoOne[4,]
+
+stripProfit22 = pTwoTwo[1,]
+fullProfit22 = pTwoTwo[2,]
+netProfit22 = pTwoTwo[3,]
+netPct22 = pTwoTwo[4,]
+
+stripProfit23 = pTwoThree[1,]
+fullProfit23 = pTwoThree[2,]
+netProfit23 = pTwoThree[3,]
+netPct23 = pTwoThree[4,]
+
