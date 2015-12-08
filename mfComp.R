@@ -1,82 +1,89 @@
-fpp <- read.csv("FranklinIndiaPrimaPlusRG.csv", stringsAsFactors=FALSE)
-ipa <- read.csv("ICICIPruEqArbRG.csv", stringsAsFactors=FALSE)
+#-------------------------------------------------------------------------------
+#                           Data Load
+#-------------------------------------------------------------------------------
+longMf      <- read.csv("FranklinIndiaPrimaPlusRG.csv", stringsAsFactors=FALSE)
+#shortMf     <- read.csv("ICICIPruEqArbRG.csv", stringsAsFactors=FALSE)
+shortMf     <- read.csv("TataBalancedRG.csv", stringsAsFactors=FALSE)
+startDate   <- as.Date("2007-01-01")
+endDate     <- as.Date("2015-09-22")
 
-ipa$Date <- as.Date(ipa$Date, "%d-%b-%y")
-fpp$Date <- as.Date(fpp$Date, "%d-%b-%y")
+#-------------------------------------------------------------------------------
+#                           Data Preparation
+#-------------------------------------------------------------------------------
 
-ipaNoZero = ipa[ipa$NAV != 0, ]
-fppNoZero = fpp[fpp$NAV != 0, ]
+# 1. Conversion to Date Format
+shortMf$Date <- as.Date(shortMf$Date, "%d-%b-%y")
+longMf$Date <- as.Date(longMf$Date, "%d-%b-%y")
 
-ipaNoDup = unique(ipaNoZero[,])
-fppNoDup = unique(fppNoZero[,])
+# 2. Remove all rows where NAV is zero
+shortMfNoZero = shortMf[shortMf$NAV != 0, ]
+longMfNoZero = longMf[longMf$NAV != 0, ]
 
-datesDf = seq.Date(as.Date("2007-01-01"), as.Date("2015-09-22"), by="days")
+# 3. Remove all duplicate rows 
+shortMfNoDup = unique(shortMfNoZero[,])
+longMfNoDup = unique(longMfNoZero[,])
 
-zeros = rep(0,length(datesDf))
-cdf = data.frame(Date=datesDf, ipa=zeros, fpp=zeros)
+# 4. Generate all individual dates from start to end dates.
+datesDf = seq.Date(startDate, endDate, by="days")
 
-skipMode = FALSE
-for (d in cdf$Date){
-    if(d %in% ipaNoDup$Date){
-        curNav = ipaNoDup[ipaNoDup$Date == d, ]$NAV
-        cdf[cdf$Date == d, ]$ipa = curNav
-        if (skipMode == TRUE){
-            endSet = as.Date(d - 1, origin="1970-01-01")
-            skipDates = seq.Date(startSet, endSet, by="days")
-            for (x in skipDates){
-                cdf[cdf$Date == x, ]$ipa = curNav
+# 5. Create a vector containing the total number of days.
+zeros = rep(0, length(datesDf))
+
+# 6. Make a temporary data frame with Date, shortMf and longMf as columns
+#    Date column will contain the dates, while shortMf and longMf are initally
+#    assigned as zeros 
+cdf = data.frame(Date=datesDf, shortMf=zeros, longMf=zeros)
+
+#-------------------------------------------------------------------------------
+# fillNavs:  
+#       Assigns the NAV for the holidays.  Ideally the NAV for a 
+#       holiday should be the NAV available on the next working day.
+#-------------------------------------------------------------------------------
+fillNavs <- function (combinedDf, indivDf, colName){
+    colIdx <- which(names(combinedDf) == colName)
+    skipMode = FALSE
+    for (d in combinedDf$Date){
+        if(d %in% indivDf$Date){
+            curNav = indivDf[indivDf$Date == d, ]$NAV
+            combinedDf[combinedDf$Date == d, ][colIdx] = curNav
+            if (skipMode == TRUE){
+                endSet = as.Date(d - 1, origin="1970-01-01")
+                skipDates = seq.Date(startSet, endSet, by="days")
+                for (x in skipDates){
+                    combinedDf[combinedDf$Date == x, ][colIdx] = curNav
+                }
+                skipMode = FALSE
             }
-            skipMode = FALSE
-        }
-    } else{
-        if(skipMode == FALSE){
-            startSet = as.Date(d, origin="1970-01-01")
-            skipMode = TRUE
-        }
-    }
-} 
-
-
-skipMode = FALSE
-for (d in cdf$Date){
-    if(d %in% fppNoDup$Date){
-        curNav = fppNoDup[fppNoDup$Date == d, ]$NAV
-        cdf[cdf$Date == d, ]$fpp = curNav
-        if (skipMode == TRUE){
-            endSet = as.Date(d - 1, origin="1970-01-01")
-            skipDates = seq.Date(startSet, endSet, by="days")
-            for (x in skipDates){
-                cdf[cdf$Date == x, ]$fpp = curNav
+        } else{
+            if(skipMode == FALSE){
+                startSet = as.Date(d, origin="1970-01-01")
+                skipMode = TRUE
             }
-            skipMode = FALSE
         }
-    }
-    else{
-        if(skipMode == FALSE){
-            startSet = as.Date(d, origin="1970-01-01")
-            skipMode = TRUE
-        }
-    }
-} 
+    } 
 
-invStartDate = as.Date("2007-01-01")
-gapYears = 1
-stpYears = 1
+    return(combinedDf)
+}
+
+emptyCdf = data.frame(Date=datesDf, shortMf=zeros, longMf=zeros)
+shortFilledCdf <- fillNavs(emptyCdf, shortMfNoDup, "shortMf")
+cdf <- fillNavs(shortFilledCdf, longMfNoDup, "longMf")
+
 
 compareFn = function(invStartDate, cdf, gapYears, stpYears){
     invAmt = 3200000
     stpMonths = stpYears * 12
 
     arbInvDate = invStartDate
-    invNAV = cdf[cdf$Date == arbInvDate, ]$ipa
+    invNAV = cdf[cdf$Date == arbInvDate, ]$shortMf
     arbUnits = invAmt / invNAV
 
-    fppNAV = cdf[cdf$Date == arbInvDate, ]$fpp
-    fppUnits = invAmt / fppNAV
+    longMfNAV = cdf[cdf$Date == arbInvDate, ]$longMf
+    longMfUnits = invAmt / longMfNAV
 
     arbRedDate = tail(seq.Date(invStartDate, by="year", 
         length.out = gapYears + 1), 1)
-    redNAV = cdf[cdf$Date == arbRedDate, ]$ipa
+    redNAV = cdf[cdf$Date == arbRedDate, ]$shortMf
     redAmt = arbUnits * redNAV
 
     amountSTP = redAmt / stpMonths
@@ -84,8 +91,8 @@ compareFn = function(invStartDate, cdf, gapYears, stpYears){
 
     gwtUnits = 0
     for (x in stpDates){
-        swpNAV = cdf[cdf$Date == x, ]$ipa
-        sipNAV = cdf[cdf$Date == x, ]$fpp
+        swpNAV = cdf[cdf$Date == x, ]$shortMf
+        sipNAV = cdf[cdf$Date == x, ]$longMf
         
         swpUnits = amountSTP / swpNAV
         sipUnits = amountSTP / sipNAV
@@ -97,14 +104,14 @@ compareFn = function(invStartDate, cdf, gapYears, stpYears){
     redeemDate = tail(seq.Date(invStartDate, by="year", 
         length.out = gapYears + stpYears + 1), 1)
         
-    redArbNAV = cdf[cdf$Date == redeemDate, ]$ipa
-    redGwtNAV = cdf[cdf$Date == redeemDate, ]$fpp
+    redArbNAV = cdf[cdf$Date == redeemDate, ]$shortMf
+    redGwtNAV = cdf[cdf$Date == redeemDate, ]$longMf
 
     arbRedeem = arbUnits * redArbNAV
     gwtRedeem = gwtUnits * redGwtNAV
 
     redStripMode = arbRedeem + gwtRedeem
-    redFullMode = fppUnits * redGwtNAV
+    redFullMode = longMfUnits * redGwtNAV
     
     netArbPlus = redStripMode - redFullMode
     ratArbPlus = netArbPlus / invAmt
@@ -117,23 +124,17 @@ compareFn = function(invStartDate, cdf, gapYears, stpYears){
 # int = A - P = P(1 + r/100)^n - P
 # int/P = A/P - 1 = (1+ r/100)^n - 1 
 
-pZeroOne = sapply(seq.Date(invStartDate, by="month", length.out=93), compareFn, 
-	cdf, 0, 1)
-pZeroTwo = sapply(seq.Date(invStartDate, by="month", length.out=81), compareFn, 
-	cdf, 0, 2)
-pOneOne = sapply(seq.Date(invStartDate, by="month", length.out=81), compareFn, 
-	cdf, 1, 1)
-pOneTwo = sapply(seq.Date(invStartDate, by="month", length.out=69), compareFn, 
-	cdf, 1, 2)
-pOneThree = sapply(seq.Date(invStartDate, by="month", length.out=57), compareFn, 
-	cdf, 1, 3) 
+invStartDate = as.Date("2007-01-01")
+
+pZeroOne = sapply(seq.Date(invStartDate, by="month", length.out=93), compareFn,	cdf, 0, 1)
+pZeroTwo = sapply(seq.Date(invStartDate, by="month", length.out=81), compareFn,	cdf, 0, 2)
+pOneOne = sapply(seq.Date(invStartDate, by="month", length.out=81), compareFn, cdf, 1, 1)
+pOneTwo = sapply(seq.Date(invStartDate, by="month", length.out=69), compareFn, cdf, 1, 2)
+pOneThree = sapply(seq.Date(invStartDate, by="month", length.out=57), compareFn, cdf, 1, 3) 
 	
-pTwoOne = sapply(seq.Date(invStartDate, by="month", length.out=69), compareFn, 
-	cdf, 2, 1)
-pTwoTwo = sapply(seq.Date(invStartDate, by="month", length.out=57), compareFn, 
-	cdf, 2, 2)
-pTwoThree = sapply(seq.Date(invStartDate, by="month", length.out=45), compareFn, 
-	cdf, 2, 3) 
+pTwoOne = sapply(seq.Date(invStartDate, by="month", length.out=69), compareFn, cdf, 2, 1)
+pTwoTwo = sapply(seq.Date(invStartDate, by="month", length.out=57), compareFn, cdf, 2, 2)
+pTwoThree = sapply(seq.Date(invStartDate, by="month", length.out=45), compareFn, cdf, 2, 3) 
 	
 stripProfit01 = pZeroOne[1,]
 fullProfit01 = pZeroOne[2,]
