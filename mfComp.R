@@ -1,3 +1,4 @@
+library(data.table)
 #-------------------------------------------------------------------------------
 #                           Data Load
 #-------------------------------------------------------------------------------
@@ -5,7 +6,7 @@ longMf      <- read.csv("FranklinIndiaPrimaPlusRG.csv", stringsAsFactors=FALSE)
 #shortMf     <- read.csv("ICICIPruEqArbRG.csv", stringsAsFactors=FALSE)
 shortMf     <- read.csv("TataBalancedRG.csv", stringsAsFactors=FALSE)
 startDate   <- as.Date("2007-01-01")
-endDate     <- as.Date("2015-09-22")
+endDate     <- as.Date("2016-10-20")
 
 #-------------------------------------------------------------------------------
 #                           Data Preparation
@@ -44,7 +45,7 @@ fillNavs <- function (combinedDf, indivDf, colName){
     skipMode = FALSE
     for (d in combinedDf$Date){
         if(d %in% indivDf$Date){
-            curNav = indivDf[indivDf$Date == d, ]$NAV
+            curNav = indivDf[indivDf$Date == d, ]$NAV[1]
             combinedDf[combinedDf$Date == d, ][colIdx] = curNav
             if (skipMode == TRUE){
                 endSet = as.Date(d - 1, origin="1970-01-01")
@@ -61,14 +62,13 @@ fillNavs <- function (combinedDf, indivDf, colName){
             }
         }
     } 
-
     return(combinedDf)
 }
 
 emptyCdf = data.frame(Date=datesDf, shortMf=zeros, longMf=zeros)
 shortFilledCdf <- fillNavs(emptyCdf, shortMfNoDup, "shortMf")
 cdf <- fillNavs(shortFilledCdf, longMfNoDup, "longMf")
-
+cdf <- data.table(cdf)
 
 compareFn = function(invStartDate, cdf, gapYears, stpYears){
     invAmt = 3200000
@@ -126,15 +126,17 @@ compareFn = function(invStartDate, cdf, gapYears, stpYears){
 
 invStartDate = as.Date("2007-01-01")
 
-pZeroOne = sapply(seq.Date(invStartDate, by="month", length.out=93), compareFn,	cdf, 0, 1)
-pZeroTwo = sapply(seq.Date(invStartDate, by="month", length.out=81), compareFn,	cdf, 0, 2)
-pOneOne = sapply(seq.Date(invStartDate, by="month", length.out=81), compareFn, cdf, 1, 1)
-pOneTwo = sapply(seq.Date(invStartDate, by="month", length.out=69), compareFn, cdf, 1, 2)
-pOneThree = sapply(seq.Date(invStartDate, by="month", length.out=57), compareFn, cdf, 1, 3) 
+pZeroOne = sapply(seq.Date(invStartDate, by="month", length.out=106), compareFn, cdf, 0, 1)
+pZeroTwo = sapply(seq.Date(invStartDate, by="month", length.out=94), compareFn,	cdf, 0, 2)
+pOneOne = sapply(seq.Date(invStartDate, by="month", length.out=94), compareFn, cdf, 1, 1)
+pOneTwo = sapply(seq.Date(invStartDate, by="month", length.out=82), compareFn, cdf, 1, 2)
+pOneThree = sapply(seq.Date(invStartDate, by="month", length.out=70), compareFn, cdf, 1, 3) 
+pOneFour = sapply(seq.Date(invStartDate, by="month", length.out=46), compareFn, cdf, 1, 4) 
 	
-pTwoOne = sapply(seq.Date(invStartDate, by="month", length.out=69), compareFn, cdf, 2, 1)
-pTwoTwo = sapply(seq.Date(invStartDate, by="month", length.out=57), compareFn, cdf, 2, 2)
-pTwoThree = sapply(seq.Date(invStartDate, by="month", length.out=45), compareFn, cdf, 2, 3) 
+pTwoOne = sapply(seq.Date(invStartDate, by="month", length.out=82), compareFn, cdf, 2, 1)
+pTwoTwo = sapply(seq.Date(invStartDate, by="month", length.out=70), compareFn, cdf, 2, 2)
+pTwoThree = sapply(seq.Date(invStartDate, by="month", length.out=58), compareFn, cdf, 2, 3) 
+pTwoFour = sapply(seq.Date(invStartDate, by="month", length.out=46), compareFn, cdf, 2, 4) 
 	
 stripProfit01 = pZeroOne[1,]
 fullProfit01 = pZeroOne[2,]
@@ -161,6 +163,11 @@ fullProfit13 = pOneThree[2,]
 netProfit13 = pOneThree[3,]
 netPct13 = pOneThree[4,]
 
+stripProfit14 = pOneFour[1,]
+fullProfit14 = pOneFour[2,]
+netProfit14 = pOneFour[3,]
+netPct14 = pOneFour[4,]
+
 stripProfit21 = pTwoOne[1,]
 fullProfit21 = pTwoOne[2,]
 netProfit21 = pTwoOne[3,]
@@ -176,3 +183,29 @@ fullProfit23 = pTwoThree[2,]
 netProfit23 = pTwoThree[3,]
 netPct23 = pTwoThree[4,]
 
+stripProfit24 = pTwoFour[1,]
+fullProfit24 = pTwoFour[2,]
+netProfit24 = pTwoFour[3,]
+netPct24 = pTwoFour[4,]
+
+summary(netPct01)
+summary(netPct02)
+summary(netPct11)
+summary(netPct12)
+summary(netPct21)
+summary(netPct13)
+summary(netPct22)
+summary(netPct14)
+summary(netPct23)
+summary(netPct24)
+
+summary(netProfit01)
+summary(netProfit02)
+summary(netProfit11)
+summary(netProfit12)
+summary(netProfit21)
+summary(netProfit13)
+summary(netProfit22)
+summary(netProfit14)
+summary(netProfit23)
+summary(netProfit24)
