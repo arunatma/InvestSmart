@@ -83,7 +83,7 @@ getFromAmfi <- function(statURL){
 }
 
 # Calculate the future value given cash-flows(p), rate(r) and days(n)
-futureValue <- function(r, p, n){
+getNPV <- function(r, p, n){
     sum(p * (1 + r) ^ (n/365)) 
 }
 
@@ -93,10 +93,10 @@ xirr <- function(cfs, dates) {
     numDays = as.double(lastDate - dates)
     # uniroot searches the interval from lower to upper for a root (i.e., zero) 
     # of the function f with respect to its first argument. 
-    return(uniroot(futureValue, c(-1, 10), p = cfs, n = numDays)$root) 
+    return(uniroot(getNPV, c(-1, 10), p = cfs, n = numDays)$root) 
 }
     
-getIrr <- function(sip, startDate, numYears, freq, navTable){
+getSipIrr <- function(sip, startDate, numYears, freq, navTable){
     endDate = startDate + numYears * 365
     redeemDate = endDate
     invDates <- seq.Date(startDate, endDate, freq)
@@ -124,23 +124,23 @@ statURL <- paste0(
     dlStartDate,"&todate=", dlEndDate,"&mf=", mfCode, "&scm=", schemeCode)    
 navTable <- getFromAmfi(statURL)
 
-startStr = "03-Apr-2006"
+startStr = "03-Apr-2012"
 startDate = as.Date(startStr, "%d-%b-%Y") 
 numYears = 7
 freq = "week"  #month #day #quarter #year
 sip = 500
-getIrr(sip, startDate, numYears, freq, navTable)
+getSipIrr(sip, startDate, numYears, freq, navTable)
 
 startDates <- seq.Date(startDate, startDate + 365 * 6, "day")
-irr4yr <- sapply(startDates, getIrr, sip=sip, numYears=4, 
+irr4yr <- sapply(startDates, getSipIrr, sip=sip, numYears=4, 
     freq=freq, navTable=navTable)
 
 startDates <- seq.Date(startDate, startDate + 365 * 5, "day")
-irr5yr <- sapply(startDates, getIrr, sip=sip, numYears=5, 
+irr5yr <- sapply(startDates, getSipIrr, sip=sip, numYears=5, 
     freq=freq, navTable=navTable)
 
 startDates <- seq.Date(startDate, startDate + 365 * 3, "day")
-irr7yr <- sapply(startDates, getIrr, sip=sip, numYears=7, 
+irr7yr <- sapply(startDates, getSipIrr, sip=sip, numYears=7, 
     freq=freq, navTable=navTable)
 
 
@@ -196,4 +196,4 @@ startDate = as.Date(startStr, "%d-%b-%Y")
 numYears = 10
 freq = "week"  #month #day #quarter #year
 sip = 500
-getIrr(sip, startDate, numYears, freq, navTable)
+getSipIrr(sip, startDate, numYears, freq, navTable)
