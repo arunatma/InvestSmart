@@ -120,39 +120,41 @@ getCfsIrr <- function(invAmt, wdwAmt, invType, invDate, startDate, endDate,
         scfs <- c(-invAmt, finalAmt)
         irr <- xirr(scfs, redeemDate, twoDates)
     }
-    
     return(list (cfsDf = cfsDf, irr = irr))
 }
+
+#bse30df <- read.csv("SENSEX.csv")
+#bse30df$Date <- as.Date(as.character(bse30df$Date), format="%d-%b-%y")
 
 
 shinyServer(function(input, output, session) {
     load("bse30.RData")
-    
-    startDate <- reactive(function(){
+
+    startDate <- eventReactive(input$button, {
         as.character(input$dateRange[1])
     })
     
-    endDate <- reactive(function(){
+    endDate <- eventReactive(input$button, {
         as.character(input$dateRange[2])
     })
     
-    invDate <- reactive(function(){
+    invDate <- eventReactive(input$button, {
         as.character(input$invDate)
     })
      
-    redeemDate <- reactive(function(){
+    redeemDate <- eventReactive(input$button, {
         as.character(input$redeemDate)
     })
     
-    cfsirr <- reactive(function(){
+    cfsirr <- eventReactive(input$button, {
         getCfsIrr(as.double(input$invAmount), as.double(input$wdwAmount), 
             input$invType, invDate(), startDate(), endDate(), input$freq, 
             redeemDate(), bse30df, "Date", "Sensex", input$reinv, 
             as.double(input$reinvRate))
     })
     
-    xdf <- reactive(function(){
-        data.frame(Date = input$redeemDate, Transaction = "Purchase", 
+    xdf <- eventReactive(input$button, {
+        data.frame(Date = redeemDate(), Transaction = "Purchase", 
             NAV = 32.5, Amount = 1000, Units = 1000/32.5, 
             UnitBalance = 1000/32.5, Cost = 1000, Valuation = 1000)
     })
@@ -198,8 +200,8 @@ shinyServer(function(input, output, session) {
         
         plotOut$xAxis(title = "#!{text: 'Date'}!#")
         
-        #plotOut$xAxis(type = 'datetime', 
-        #    labels = list(format = '{value:%Y-%m-%d}'))
+        plotOut$xAxis(type = 'datetime', 
+            labels = list(format = '{value:%Y-%m-%d}'))
         
         plotOut$yAxis(title = "#!{text: 'Amount (in Rupees)'}!#")
         plotOut$plotOptions(line=list(marker=list(enabled = F)))

@@ -39,7 +39,8 @@ shinyUI(pageWithSidebar(
                 )
             )
         ),
-        dateInput('redeemDate', 'Redeem Date:', value = '2015-01-01')
+        dateInput('redeemDate', 'Redeem Date:', value = '2015-01-01'),
+        actionButton("button", "Go!")
         
     ),
     
